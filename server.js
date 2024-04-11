@@ -7,6 +7,11 @@ const session = require('express-session');
 const passport = require('passport');
 const routes = require('./routes.js')
 const auth = require('./auth.js')
+const passportSocketIo = require('passport.socketio');
+const cookieParser = require('cookie-parser');
+const MongoStore = require('connect-mongo')(session);
+const URI = process.env.MONGO_URI;
+const store = new MongoStore({ url: URI });
 
 const app = express();
 const http = require('http').createServer(app)
@@ -19,7 +24,9 @@ app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: true,
   saveUninitialized: true,
-  cookie: { secure: false }
+  cookie: { secure: false },
+  key: 'express.sid',
+  store: store
 }))
 
 function onAuthorizeSuccess(data, accept) {
@@ -41,13 +48,6 @@ fccTesting(app); //For FCC testing purposes
 app.use('/public', express.static(process.cwd() + '/public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-
-const passportSocketIo = require('passport.socketio');
-const connect = require('mongodb');
-const MongoStore = require('connect-mongo')(session);
-const URI = process.env.MONGO_URI;
-const store = new MongoStore({ url: URI });
 
 myDB(async client => {
   const myDataBase = await client.db('database').collection('users');
